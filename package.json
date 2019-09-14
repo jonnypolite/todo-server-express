@@ -3,12 +3,21 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc mocha --exit",
+    "testWatch": "mocha --watch -R min"
   },
   "author": "jon@joncodes.com",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
     "sqlite": "^3.0.3"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "sinon": "^7.4.2",
+    "sinon-chai": "^3.3.0",
+    "supertest": "^4.0.2"
   }
 }
