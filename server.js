@@ -28,8 +28,12 @@ const adjustRequestMiddleware = (req, res, next) => {
 const adjustResponse = taskJson => {
   let taskArray
 
+  if (!taskJson) {
+    return
+  }
+
   taskArray = (Array.isArray(taskJson) ? taskJson : [taskJson]).map(task => {
-    if (task.complete) {
+    if (Number.isInteger(task.complete)) {
       task.complete = task.complete === 1 ? true : false
     }
     return task
@@ -46,12 +50,12 @@ app.use(express.json())
 app.use(dbMiddleware)
 app.use(adjustRequestMiddleware)
 
-app.delete('/api/todo/:id', async (req, res) => {
+app.delete('/api/todo/:user/:id', async (req, res) => {
   try {
     await req.db.run(
       'DELETE FROM tasks WHERE id = ? AND user = ?',
       req.params.id,
-      req.query.user
+      req.params.user
     )
 
     sendTaskJson(res, { success: true })
@@ -60,7 +64,7 @@ app.delete('/api/todo/:id', async (req, res) => {
   }
 })
 
-app.get('/api/todo', async (req, res, next) => {
+app.get('/api/todo/:user', async (req, res, next) => {
   try {
     let sql = 'SELECT * FROM tasks WHERE user = ?'
     if (req.query.complete === 'true') {
@@ -69,7 +73,7 @@ app.get('/api/todo', async (req, res, next) => {
       sql += ' AND complete = 0'
     }
 
-    const tasks = await req.db.all(sql, req.query.user)
+    const tasks = await req.db.all(sql, req.params.user)
 
     sendTaskJson(res, tasks)
 
@@ -78,7 +82,7 @@ app.get('/api/todo', async (req, res, next) => {
   }
 })
 
-app.get('/api/todo/:id', async (req, res) => {
+app.get('/api/todo/:user/:id', async (req, res) => {
   try {
     const task = await req.db.get(
       'SELECT * FROM tasks WHERE id = ? AND user = ?',
@@ -96,12 +100,12 @@ app.get('/api/todo/:id', async (req, res) => {
   }
 })
 
-app.post('/api/todo/', async (req, res) => {
+app.post('/api/todo/:user', async (req, res) => {
   try {
     const insert = await req.db.run(
       'INSERT INTO tasks (description, user) VALUES(?, ?)',
       req.body.description,
-      req.body.user
+      req.params.user
     )
 
     const task = await req.db.get('SELECT * FROM tasks WHERE id = ?', insert.stmt.lastID)
@@ -112,18 +116,18 @@ app.post('/api/todo/', async (req, res) => {
   }
 })
 
-app.patch('/api/todo/:id', async (req, res) => {
+app.patch('/api/todo/:user/:id', async (req, res) => {
   try {
     let queryParams = []
     const updateSql = 'UPDATE tasks'
     const updateColumns = []
-    const { user, ...updates} = req.body;
+    const { ...updates } = req.body;
 
     Object.keys(updates).forEach(bodyKey => {
       updateColumns.push(`${bodyKey} = ?`)
       queryParams.push(updates[bodyKey])
     })
-    queryParams = queryParams.concat([req.params.id, user])
+    queryParams = queryParams.concat([req.params.id, req.params.user])
 
     if (updateColumns.length) {
       await req.db.run(
