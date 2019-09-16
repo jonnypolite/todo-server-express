@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "concurrently \"nodemon server.js\" \"node start-client.js\"",
+    "start": "concurrently -n server,client -c yellow,blue \"nodemon server.js\" \"node start-client.js\"",
     "test": "nyc mocha --exit",
     "testWatch": "mocha --watch -R min"
   },
